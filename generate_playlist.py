@@ -17,8 +17,8 @@ def raw_to_df(raw):
     
     Returns
     -------
-    df : pandas.DataFrame
-
+    pandas.DataFrame
+        DataFrame containing the raw data in a clean table format.
     '''
 
     cols = int(input('How many columns does your data have?\n'))
@@ -33,6 +33,15 @@ def raw_to_df(raw):
     return df
 
 def spotify_auth():
+    '''
+    Authenticate with Spotify API based on credentials in config.ini.
+
+    Returns
+    -------
+    spotipy.Spotify
+        Spotify API client object used to execute all API calls.
+    '''
+
     auth = SpotifyOAuth(client_id = config.client_id,
                         client_secret = config.client_secret,
                         scope = 'playlist-modify-private',
@@ -42,6 +51,20 @@ def spotify_auth():
     return sp
 
 def create_playlist(sp):
+    '''
+    Create a Spotify playlist with given name and description.
+
+    Parameters
+    ----------
+    sp : spotipy.Spotify
+        Spotify API client object used to execute all API calls.
+
+    Returns
+    -------
+    dict
+        JSON response from Spotify API containing playlist metadata.
+    '''
+
     name = input('Give a name for the playlist: ')
     desc = input('Give a description for the playlist (optional): ')
     playlist = sp.user_playlist_create(sp.me()['id'], name, description = desc,
@@ -52,19 +75,55 @@ def create_playlist(sp):
     return playlist
 
 def add_uris_to_df(sp, df):
-    song_col = int(input(f'Which column has the song names? (0-{df.shape[1] - 1}): '))
-    artist_col = int(input(f'Which column has the artist names? (0-{df.shape[1] - 1}): '))
+    '''
+    Finds the songs in given dataframe and adds their Spotify URIs to
+    a new column in the dataframe.
+
+    Parameters
+    ----------
+    sp : spotipy.Spotify
+        Spotify API client object used to execute all API calls.
+    df : pandas.DataFrame
+        DataFrame containing the raw data in a clean table format.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Raw data in a clean table format augmented with Spotify song URIs.
+    '''
+
+    song_col = int(input(f'Which column has the song names? '
+                         + '(0-{df.shape[1] - 1}): '))
+    artist_col = int(input(f'Which column has the artist names? '
+                           + '(0-{df.shape[1] - 1}): '))
 
     for idx, row in df.iterrows():
         result = sp.search(f'{row[artist_col]} {row[song_col]}', limit = 1)
-        print(f'Found the song {result["tracks"]["items"][0]["artists"][0]["name"][:40]:40} '
-              + f'{result["tracks"]["items"][0]["name"][:40]:40} '
-              + f'{result["tracks"]["items"][0]["uri"]}')
+        result = result["tracks"]["items"][0]
+        print(f'Found the song {result["artists"][0]["name"][:40]:40} '
+              + f'{result["name"][:40]:40} {result["uri"]}')
         df.iloc[idx, df.shape[1] - 1] = result["tracks"]["items"][0]["uri"]
 
     return df
 
 def add_songs_to_playlist(sp, df, playlist):
+    '''
+    Add songs from the dataframe to given Spotify playlist.
+
+    Parameters
+    ----------
+    sp : spotipy.Spotify
+        Spotify API client object used to execute all API calls.
+    df : pandas.DataFrame
+        Raw data in a clean table format augmented with Spotify song URIs.
+    playlist : dict
+        JSON response from Spotify API containing playlist metadata.
+
+    Returns
+    -------
+    None
+    '''
+
     print(f'Adding items to playlist {playlist["name"]}')
     sp.playlist_add_items(playlist['id'], df[df.shape[1] - 1].tolist())
 
@@ -74,7 +133,8 @@ if __name__ == '__main__':
     raw = pyperclip.paste()
 
     if raw == '':
-        print('Clipboard is empty. Copy a table to clipboard and restart the script.')
+        print('Clipboard is empty. '
+              + 'Copy a table to clipboard and restart the script.')
     else:
         df = raw_to_df(raw)
         sp = spotify_auth()
