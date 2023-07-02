@@ -93,16 +93,16 @@ def add_uris_to_df(sp, df):
     '''
 
     song_col = int(input(f'Which column has the song names? '
-                         + '(0-{df.shape[1] - 1}): '))
+                         + f'(0-{df.shape[1] - 1}): '))
     artist_col = int(input(f'Which column has the artist names? '
-                           + '(0-{df.shape[1] - 1}): '))
+                           + f'(0-{df.shape[1] - 1}): '))
 
     for idx, row in df.iterrows():
         result = sp.search(f'{row[artist_col]} {row[song_col]}', limit = 1)
         result = result["tracks"]["items"][0]
         print(f'Found the song {result["artists"][0]["name"][:40]:40} '
               + f'{result["name"][:40]:40} {result["uri"]}')
-        df.iloc[idx, df.shape[1] - 1] = result["tracks"]["items"][0]["uri"]
+        df.iloc[idx, df.shape[1] - 1] = result["uri"]
 
     return df
 
