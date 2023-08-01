@@ -62,3 +62,4 @@ Create a spotify playlist based on your clipboard contents. Expected input forma
 ## Todo
 
 - Remove a playlist in case of an error to prevent filling the user's library with empty/failed playlists.
+- Compute a similarity score between the search string and the search result to trigger a not-found warning instead of adding a random song to the playlist
